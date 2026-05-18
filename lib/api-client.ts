@@ -1,8 +1,7 @@
 import type { ApiEnvelope } from "./types";
 import { useAuthStore } from "./auth-store";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
 export class ApiError extends Error {
   status: number;
@@ -15,6 +14,7 @@ export class ApiError extends Error {
 type Query = Record<string, string | number | boolean | undefined | null>;
 
 function buildUrl(path: string, query?: Query): string {
+  console.log({ BASE_URL, path, query });
   const url = new URL(path.startsWith("/") ? path : `/${path}`, BASE_URL);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -87,12 +87,10 @@ async function request<T>(
 export const api = {
   get: <T>(path: string, query?: Query, signal?: AbortSignal) =>
     request<T>("GET", path, { query, signal }),
-  post: <T>(path: string, body?: unknown) =>
-    request<T>("POST", path, { body }),
+  post: <T>(path: string, body?: unknown) => request<T>("POST", path, { body }),
   patch: <T>(path: string, body?: unknown) =>
     request<T>("PATCH", path, { body }),
-  put: <T>(path: string, body?: unknown) =>
-    request<T>("PUT", path, { body }),
+  put: <T>(path: string, body?: unknown) => request<T>("PUT", path, { body }),
   delete: <T>(path: string) => request<T>("DELETE", path),
   upload: <T>(path: string, file: File) => {
     const formData = new FormData();
