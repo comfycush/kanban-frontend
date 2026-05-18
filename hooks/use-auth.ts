@@ -30,6 +30,9 @@ export function useLogin() {
       setAuth(data.accessToken, data.user);
       queryClient.setQueryData(["auth", "me"], data.user);
     },
+    onError: (error) => {
+      console.log(error);
+    },
   });
 }
 
