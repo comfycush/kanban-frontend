@@ -23,10 +23,10 @@ export default function RegisterPage() {
   const register = useRegister();
 
   const form = useForm({
-    initialValues: { email: "", password: "" },
+    initialValues: { email: "", fullName: "", password: "" },
     validate: {
-      email: (value) =>
-        /^\S+@\S+\.\S+$/.test(value) ? null : "Invalid email",
+      email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : "Invalid email"),
+      fullName: (value) => (value?.length > 0 ? null : "Full name is required"),
       password: (value) =>
         value.length >= 8 ? null : "Password must be at least 8 characters",
     },
@@ -71,13 +71,24 @@ export default function RegisterPage() {
               required
               {...form.getInputProps("email")}
             />
+            <TextInput
+              label="Full Name"
+              placeholder="John Doe"
+              required
+              {...form.getInputProps("fullName")}
+            />
             <PasswordInput
               label="Password"
               placeholder="At least 8 characters"
               required
               {...form.getInputProps("password")}
             />
-            <Button type="submit" loading={register.isPending} fullWidth mt="xs">
+            <Button
+              type="submit"
+              loading={register.isPending}
+              fullWidth
+              mt="xs"
+            >
               Create account
             </Button>
           </Stack>
