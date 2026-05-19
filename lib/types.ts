@@ -22,6 +22,7 @@ export interface ApiEnvelope<T> {
 
 export interface UserPublic {
   id: string;
+  fullName: string;
   email: string;
   createdAt?: string;
 }
