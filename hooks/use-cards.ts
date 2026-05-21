@@ -1,7 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
+import { api, getAuthHeaders } from "@/lib/api-client";
+import {
+  createCard,
+  deleteCard,
+  moveCard,
+  updateCard,
+} from "@/lib/server/realtime-mutations";
 import type {
   ActivityLogItem,
   Attachment,
@@ -48,7 +54,12 @@ export function useCreateCard(boardId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (vars: { columnId: string; dto: CreateCardDto }) =>
-      api.post<Card>(`/columns/${vars.columnId}/cards`, vars.dto),
+      createCard(
+        getAuthHeaders(),
+        boardId,
+        vars.columnId,
+        vars.dto,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: boardsKeys.detail(boardId) });
     },
@@ -58,8 +69,12 @@ export function useCreateCard(boardId: string) {
 export function useUpdateCard(cardId: string, boardId?: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (dto: UpdateCardDto) =>
-      api.patch<CardDetail>(`/cards/${cardId}`, dto),
+    mutationFn: (dto: UpdateCardDto) => {
+      if (!boardId) {
+        return api.patch<CardDetail>(`/cards/${cardId}`, dto);
+      }
+      return updateCard(getAuthHeaders(), boardId, cardId, dto);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cardsKeys.detail(cardId) });
       if (boardId) {
@@ -69,21 +84,28 @@ export function useUpdateCard(cardId: string, boardId?: string) {
   });
 }
 
-export function useDeleteCard(boardId: string) {
+export function useDeleteCard(boardId: string, orgId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (cardId: string) => api.delete<null>(`/cards/${cardId}`),
+    mutationFn: (cardId: string) =>
+      deleteCard(getAuthHeaders(), boardId, orgId, cardId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: boardsKeys.detail(boardId) });
     },
   });
 }
 
-export function useMoveCard(boardId: string) {
+export function useMoveCard(boardId: string, orgId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (vars: { cardId: string; dto: MoveCardDto }) =>
-      api.patch<CardDetail>(`/cards/${vars.cardId}/move`, vars.dto),
+      moveCard(
+        getAuthHeaders(),
+        boardId,
+        orgId,
+        vars.cardId,
+        vars.dto,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: boardsKeys.detail(boardId) });
     },

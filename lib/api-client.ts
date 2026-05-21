@@ -11,9 +11,13 @@ export class ApiError extends Error {
 
 type Query = Record<string, string | number | boolean | undefined | null>;
 
-function authHeader(): Record<string, string> {
+export function getAuthHeaders(): Record<string, string> {
   const token = useAuthStore.getState().token;
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function authHeader(): Record<string, string> {
+  return getAuthHeaders();
 }
 
 // async function request<T>(

@@ -61,7 +61,7 @@ export function KanbanBoard({ board, onCardClick }: Props) {
   const [newColumnName, setNewColumnName] = useState("");
 
   const reorderColumns = useReorderColumns(board.id);
-  const moveCard = useMoveCard(board.id);
+  const moveCard = useMoveCard(board.id, board.orgId);
   const createColumn = useCreateColumn(board.id);
 
   const sensors = useSensors(
