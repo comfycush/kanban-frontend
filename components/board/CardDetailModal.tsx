@@ -75,7 +75,7 @@ export function CardDetailModal({ cardId, boardId, orgId, onClose }: Props) {
   const { data: members } = useOrgMembers(orgId);
 
   const updateCard = useUpdateCard(cardId ?? "", boardId);
-  const deleteCard = useDeleteCard(boardId);
+  const deleteCard = useDeleteCard(boardId, orgId);
   const uploadAttachment = useUploadAttachment(cardId ?? "");
   const deleteAttachment = useDeleteAttachment(cardId ?? "");
 
