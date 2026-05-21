@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kanban Frontend
 
-## Getting Started
+Next.js app for a multi-tenant Kanban workspace: organizations, boards, cards, members, activity, and org-wide chat. Data is loaded from the Kanban Nest API over REST; realtime updates use [Ably](https://ably.com).
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router)
+- **React 19**, **TypeScript**
+- **Mantine** UI, **TanStack Query**, **Zustand** (auth)
+- **@dnd-kit** for drag-and-drop on boards
+- **Ably** + **@ably/chat** for realtime
+
+## Prerequisites
+
+- Node.js 20+
+- [pnpm](https://pnpm.io) (recommended) or npm/yarn
+- Kanban API running (default `http://localhost:3000`)
+- Ably account with an API key ([dashboard](https://ably.com/accounts))
+
+## Environment variables
+
+Create `.env.local` in the project root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Nest API base URL (server-side fetch + membership checks for Ably tokens)
+API_URL=http://localhost:3000
+
+# Ably root API key — server only; never expose as NEXT_PUBLIC_*
+ABLY_API_KEY=your-ably-api-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `API_URL` | Yes | Backend HTTP API used by server actions and Ably token auth |
+| `ABLY_API_KEY` | Yes | Issues Ably tokens and publishes board events from the Next server |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Getting started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm install
+pnpm dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) (or pass a port, e.g. `pnpm dev -- -p 3001`).
 
-To learn more about Next.js, take a look at the following resources:
+Register or log in, create or join an org, then use boards and **Messages** for org chat.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Development server |
+| `pnpm build` | Production build |
+| `pnpm start` | Run production build |
+| `pnpm lint` | ESLint |
 
-## Deploy on Vercel
+## Realtime architecture
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Org messages (`/orgs/[orgId]/messages`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Uses **Ably Chat** (`@ably/chat/react`), not the REST messages API:
+
+- One chat room per org: `org:{orgId}`
+- `AblyChatProviders` + `ChatRoomProvider` + `OrgChatPanel` (`useMessages`, `useChatConnection`)
+- Token: server action `getAblyToken` in `lib/server/ably-token.ts` (membership verified via `API_URL`)
+
+Messages live in Ably Chat history. They are separate from any messages stored in the Nest database.
+
+### Kanban boards (`/orgs/[orgId]/boards/[boardId]`)
+
+Uses **Ably Pub/Sub** channels:
+
+- Channel `board:{boardId}`, event `board`
+- Client subscribes via `hooks/use-board-socket.ts` and invalidates the board query on updates
+- Server publishes after card mutations in `lib/server/realtime-mutations.ts` (create / update / move / delete)
+
+## Project layout (high level)
+
+```
+app/                    # Routes (auth, orgs, boards, messages)
+components/
+  chat/                 # Ably Chat providers and org chat UI
+  board/                # Kanban board UI
+lib/
+  server/               # Server actions, API fetcher, Ably token + publish
+  ably-client.ts        # Board channel subscriptions (browser)
+hooks/                  # React Query hooks + board realtime hook
+```
+
+## Backend
+
+Point `API_URL` at your Kanban Nest API. The frontend expects JWT auth (`Authorization: Bearer`) and the usual org/board/card/message endpoints for CRUD. Realtime for chat is handled on the frontend via Ably Chat; board events are published from this Next app after successful card API calls.
+
+## Learn more
+
+- [Next.js documentation](https://nextjs.org/docs)
+- [Ably Chat — React](https://ably.com/docs/chat/getting-started/react)
+- [Ably token authentication](https://ably.com/docs/auth/token)
