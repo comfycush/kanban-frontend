@@ -104,20 +104,21 @@ export function OrgChatPanel() {
   }, [messages.length]);
 
   const isLive = currentStatus === ConnectionStatus.Connected;
-
+  console.log({ currentStatus, isLive });
   const onSend = async () => {
     const trimmed = content.trim();
     if (!trimmed || !me) return;
     setContent("");
     setSending(true);
     try {
-      await sendMessage({
+      const result = await sendMessage({
         text: trimmed,
         metadata: {
           email: me.email,
           fullName: me.fullName,
         },
       });
+      console.log(result);
     } catch {
       setContent(trimmed);
       notifications.show({
@@ -165,10 +166,7 @@ export function OrgChatPanel() {
                     </Avatar>
                   )}
                   <Stack gap={2} className="max-w-[70%]">
-                    <Group
-                      gap="xs"
-                      justify={mine ? "flex-end" : "flex-start"}
-                    >
+                    <Group gap="xs" justify={mine ? "flex-end" : "flex-start"}>
                       <Text size="xs" fw={500}>
                         {mine ? "You" : label}
                       </Text>
