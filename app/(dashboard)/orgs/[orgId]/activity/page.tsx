@@ -12,6 +12,7 @@ import {
   Text,
   Timeline,
   Title,
+  Tooltip,
 } from "@mantine/core";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -76,9 +77,17 @@ export default function OrgActivityPage({
                   ? a.data.summary
                   : a.type.replace(/_/g, " ").toLowerCase()}
               </Text>
-              <Text size="xs" c="dimmed" mt={2}>
-                {dayjs(a.createdAt).fromNow()}
-              </Text>
+              <Group justify="space-between">
+                <Tooltip
+                  label={dayjs(a.createdAt).format("YYYY-MM-DD HH:mm:ss")}
+                  position="bottom-start"
+                  openDelay={250}
+                >
+                  <Text size="xs" c="dimmed" mt={2}>
+                    {dayjs(a.createdAt).fromNow()}
+                  </Text>
+                </Tooltip>
+              </Group>
             </Timeline.Item>
           ))}
         </Timeline>

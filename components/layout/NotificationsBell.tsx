@@ -92,7 +92,7 @@ export function NotificationsBell() {
               No notifications yet
             </Text>
           ) : (
-            <Stack gap={0}>
+            <Stack gap={0} className="px-3">
               {notifications.map((n) => (
                 <UnstyledButton
                   key={n.id}
@@ -107,7 +107,7 @@ export function NotificationsBell() {
                     />
                     <Stack gap={2} className="flex-1 min-w-0">
                       <Text size="sm" lineClamp={2}>
-                        {notificationSummary(n)}
+                        {n.message}
                       </Text>
                       <Text size="xs" c="dimmed">
                         {dayjs(n.createdAt).fromNow()}

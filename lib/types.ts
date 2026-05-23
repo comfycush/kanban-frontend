@@ -109,10 +109,11 @@ export interface CardDetail extends Card {
 export interface NotificationItem {
   id: string;
   userId: string;
-  type: string;
+  type: "INVITE" | "CARD_ASSIGNED" | "SYSTEM";
   data: Record<string, unknown>;
   readAt: string | null;
   createdAt: string;
+  message: string;
 }
 
 export interface PrismaUpdateManyResult {
