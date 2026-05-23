@@ -14,11 +14,13 @@ import {
 } from "@mantine/core";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import Link from "next/link";
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotifications,
 } from "@/hooks/use-notifications";
+import type { NotificationItem } from "@/lib/types";
 
 dayjs.extend(relativeTime);
 
@@ -42,20 +44,35 @@ function BellIcon() {
   );
 }
 
-function notificationSummary(n: {
-  type: string;
-  data: Record<string, unknown>;
-}): string {
-  const summary = n.data?.summary;
-  if (typeof summary === "string") return summary;
-  return n.type.replace(/_/g, " ").toLowerCase();
+function notificationUrl(n: NotificationItem): string | null {
+  const data = n.data;
+  const str = (key: string): string | undefined => {
+    const v = data[key];
+    return typeof v === "string" ? v : undefined;
+  };
+
+  if (n.type === "INVITE") {
+    const orgId = str("orgId");
+    return orgId ? `/orgs/${orgId}` : null;
+  }
+
+  if (n.type === "CARD_ASSIGNED") {
+    const orgId = str("orgId");
+    const cardId = str("cardId");
+    if (orgId && cardId) return `/orgs/${orgId}?card=${cardId}`;
+    if (orgId) return `/orgs/${orgId}`;
+    return null;
+  }
+
+  return null;
 }
 
 export function NotificationsBell() {
   const { data: notifications = [] } = useNotifications();
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
-  const unreadCount = notifications.filter((n) => !n.readAt).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
+  console.log({ notifications });
 
   return (
     <Popover width={360} position="bottom-end" withArrow shadow="md">
@@ -93,29 +110,63 @@ export function NotificationsBell() {
             </Text>
           ) : (
             <Stack gap={0} className="px-3">
-              {notifications.map((n) => (
-                <UnstyledButton
-                  key={n.id}
-                  onClick={() => !n.readAt && markRead.mutate(n.id)}
-                  className="px-3 py-2 border-t border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-left"
-                >
+              {notifications.map((n) => {
+                const url = notificationUrl(n);
+                const itemClass =
+                  "px-3 py-2 border-t border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-left w-full";
+                const inner = (
                   <Group gap="xs" align="flex-start" wrap="nowrap">
                     <div
                       className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                        n.readAt ? "bg-transparent" : "bg-blue-500"
+                        n.read ? "bg-transparent" : "bg-blue-500"
                       }`}
                     />
                     <Stack gap={2} className="flex-1 min-w-0">
                       <Text size="sm" lineClamp={2}>
                         {n.message}
                       </Text>
-                      <Text size="xs" c="dimmed">
-                        {dayjs(n.createdAt).fromNow()}
-                      </Text>
+                      <Group gap="xs" align="center">
+                        <Text size="xs" c="dimmed">
+                          {dayjs(n.createdAt).fromNow()}
+                        </Text>
+                        {url && (
+                          <Text size="xs" c="blue" className="underline">
+                            View →
+                          </Text>
+                        )}
+                      </Group>
                     </Stack>
                   </Group>
-                </UnstyledButton>
-              ))}
+                );
+
+                if (url) {
+                  return (
+                    <Link
+                      key={n.id}
+                      href={url}
+                      className={itemClass}
+                      onClick={() => !n.read && markRead.mutate(n.id)}
+                      style={{
+                        display: "block",
+                        textDecoration: "none",
+                        color: "inherit",
+                      }}
+                    >
+                      {inner}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <UnstyledButton
+                    key={n.id}
+                    onClick={() => !n.read && markRead.mutate(n.id)}
+                    className={itemClass}
+                  >
+                    {inner}
+                  </UnstyledButton>
+                );
+              })}
             </Stack>
           )}
         </ScrollArea>

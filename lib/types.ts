@@ -111,7 +111,7 @@ export interface NotificationItem {
   userId: string;
   type: "INVITE" | "CARD_ASSIGNED" | "SYSTEM";
   data: Record<string, unknown>;
-  readAt: string | null;
+  read: string | null;
   createdAt: string;
   message: string;
 }
